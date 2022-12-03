@@ -1,6 +1,13 @@
 use std::{cmp::Ordering, str::FromStr};
 
-use aoc_runner_derive::{aoc, aoc_generator};
+const INPUT: &str = include_str!("../../input/day2.txt");
+
+pub fn main() {
+    let input = input_generator(INPUT);
+
+    println!("part1: {}", part1(&input));
+    println!("part2: {}", part2(&input));
+}
 
 #[derive(PartialEq, Eq)]
 #[cfg_attr(test, derive(Debug))]
@@ -16,7 +23,6 @@ pub struct Round {
     us: Shape,
 }
 
-#[aoc_generator(day2)]
 pub fn input_generator(input: &str) -> Vec<Round> {
     input
         .lines()
@@ -29,12 +35,10 @@ pub fn input_generator(input: &str) -> Vec<Round> {
         .collect()
 }
 
-#[aoc(day2, part1)]
 fn part1(input: &[Round]) -> u64 {
     input.iter().fold(0, |score, round| score + round.outcome())
 }
 
-#[aoc(day2, part2)]
 fn part2(input: &[Round]) -> u64 {
     input.iter().fold(0, |score, round| {
         score
@@ -163,7 +167,7 @@ C Z",
     }
 
     mod outcomes {
-        use crate::day2::Shape;
+        use crate::Shape;
 
         #[test]
         fn rock_beats_scissors() {

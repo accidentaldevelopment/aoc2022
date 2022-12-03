@@ -1,6 +1,12 @@
-use aoc_runner_derive::{aoc, aoc_generator};
+const INPUT: &str = include_str!("../../input/day1.txt");
 
-#[aoc_generator(day1)]
+pub fn main() {
+    let input = input_generator(INPUT);
+
+    println!("part1: {}", part1(&input));
+    println!("part2: {}", part2(&input));
+}
+
 pub fn input_generator(input: &str) -> Vec<usize> {
     let mut calorie_counts = vec![];
     let mut current_cals: usize = 0;
@@ -19,12 +25,10 @@ pub fn input_generator(input: &str) -> Vec<usize> {
     calorie_counts
 }
 
-#[aoc(day1, part1)]
 fn part1(input: &[usize]) -> usize {
     input.iter().max().unwrap().to_owned()
 }
 
-#[aoc(day1, part2)]
 fn part2(input: &[usize]) -> usize {
     // Would be nice to do this without allocating a new vec.
     let mut input = input.to_vec();
