@@ -1,53 +1,58 @@
-use std::{cmp::Ordering, str::FromStr};
+use std::{cmp::Ordering, convert::Infallible, fmt::Debug, str::FromStr};
 
 const INPUT: &str = include_str!("../../input/day2.txt");
 
-pub fn main() {
-    let input = input_generator(INPUT);
-
-    println!("part1: {}", part1(&input));
-    println!("part2: {}", part2(&input));
-}
-
 #[derive(PartialEq, Eq)]
 #[cfg_attr(test, derive(Debug))]
-pub enum Shape {
+enum Shape {
     Rock,
     Paper,
     Scissors,
 }
 
+#[derive(PartialEq, Eq)]
+#[cfg_attr(test, derive(Debug))]
+enum Outcome {
+    Win,
+    Lose,
+    Draw,
+}
+
+trait Round {
+    fn outcome(&self) -> u64;
+}
+
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub struct Round {
+struct WrongRound {
     them: Shape,
     us: Shape,
 }
 
-pub fn input_generator(input: &str) -> Vec<Round> {
-    input
-        .lines()
-        .map(|l| {
-            let mut tokens = l.split(' ');
-            let us = tokens.next().unwrap().parse::<Shape>().unwrap();
-            let them = tokens.next().unwrap().parse::<Shape>().unwrap();
-            Round::from((us, them))
-        })
-        .collect()
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
+struct CorrectRound {
+    them: Shape,
+    outcome: Outcome,
 }
 
-fn part1(input: &[Round]) -> u64 {
+pub fn main() {
+    println!("part1: {}", part1(&input_generator::<WrongRound>(INPUT)));
+    println!("part2: {}", part2(&input_generator::<CorrectRound>(INPUT)));
+}
+
+fn input_generator<R>(input: &str) -> Vec<R>
+where
+    R: FromStr + Round,
+    <R as FromStr>::Err: Debug,
+{
+    input.lines().map(|l| l.parse::<R>().unwrap()).collect()
+}
+
+fn part1(input: &[WrongRound]) -> u64 {
     input.iter().fold(0, |score, round| score + round.outcome())
 }
 
-fn part2(input: &[Round]) -> u64 {
-    input.iter().fold(0, |score, round| {
-        score
-            + match round.us {
-                Shape::Rock => round.them.defeats().points(),
-                Shape::Paper => round.them.points() + 3,
-                Shape::Scissors => round.them.loses_to().points() + 6,
-            }
-    })
+fn part2(input: &[CorrectRound]) -> u64 {
+    input.iter().fold(0, |score, round| score + round.outcome())
 }
 
 impl FromStr for Shape {
@@ -110,13 +115,45 @@ impl Shape {
     }
 }
 
-impl From<(Shape, Shape)> for Round {
-    fn from((them, us): (Shape, Shape)) -> Self {
-        Self { them, us }
+// Bunch of FromStr impls. `Err`  associate types are marked `Infallible`, which is not literally
+// true. But we're going to violently assume AoC is always giving us valid input.
+
+impl FromStr for Outcome {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "X" => Ok(Self::Lose),
+            "Y" => Ok(Self::Draw),
+            "Z" => Ok(Self::Win),
+            _ => unreachable!("puzzle input is invalid"),
+        }
     }
 }
 
-impl Round {
+impl FromStr for WrongRound {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut tokens = s.split(' ');
+        let them = tokens.next().unwrap().parse::<Shape>().unwrap();
+        let us = tokens.next().unwrap().parse::<Shape>().unwrap();
+        Ok(Self { them, us })
+    }
+}
+
+impl FromStr for CorrectRound {
+    type Err = Infallible;
+
+    fn from_str(line: &str) -> Result<Self, Self::Err> {
+        let mut tokens = line.split(' ');
+        let them = tokens.next().unwrap().parse::<Shape>().unwrap();
+        let outcome = tokens.next().unwrap().parse::<Outcome>().unwrap();
+        Ok(Self { them, outcome })
+    }
+}
+
+impl Round for WrongRound {
     fn outcome(&self) -> u64 {
         self.us.points()
             + match self.us.cmp(&self.them) {
@@ -127,43 +164,77 @@ impl Round {
     }
 }
 
+impl Round for CorrectRound {
+    fn outcome(&self) -> u64 {
+        match self.outcome {
+            Outcome::Win => 6 + self.them.loses_to().points(),
+            Outcome::Draw => 3 + self.them.points(),
+            Outcome::Lose => self.them.defeats().points(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Round, Shape};
+    use crate::{CorrectRound, Outcome};
 
-    const IN_DATA: [Round; 3] = [
-        Round {
+    use super::{Shape, WrongRound};
+
+    const WR_DATA: [WrongRound; 3] = [
+        WrongRound {
             them: Shape::Rock,
             us: Shape::Paper,
         },
-        Round {
+        WrongRound {
             them: Shape::Paper,
             us: Shape::Rock,
         },
-        Round {
+        WrongRound {
             them: Shape::Scissors,
             us: Shape::Scissors,
         },
     ];
 
+    const CORRECT_DATA: [CorrectRound; 3] = [
+        CorrectRound {
+            them: Shape::Rock,
+            outcome: Outcome::Draw,
+        },
+        CorrectRound {
+            them: Shape::Paper,
+            outcome: Outcome::Lose,
+        },
+        CorrectRound {
+            them: Shape::Scissors,
+            outcome: Outcome::Win,
+        },
+    ];
+
     #[test]
     fn generator() {
-        let got = super::input_generator(
+        let got = super::input_generator::<WrongRound>(
             r"A Y
 B X
 C Z",
         );
-        assert_eq!(got, IN_DATA);
+        assert_eq!(got, WR_DATA);
+
+        let got = super::input_generator::<CorrectRound>(
+            r"A Y
+B X
+C Z",
+        );
+        assert_eq!(got, CORRECT_DATA);
     }
 
     #[test]
     fn part1() {
-        assert_eq!(super::part1(&IN_DATA), 15);
+        assert_eq!(super::part1(&WR_DATA), 15);
     }
 
     #[test]
     fn part2() {
-        assert_eq!(super::part2(&IN_DATA), 12);
+        assert_eq!(super::part2(&CORRECT_DATA), 12);
     }
 
     mod outcomes {
