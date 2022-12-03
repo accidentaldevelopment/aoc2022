@@ -1,3 +1,5 @@
+set dotenv-load
+
 day_template := '''
 // TODO: Set correct day
 const INPUT: &str = include_str!("../../input/day{{day}}.txt");
@@ -39,6 +41,13 @@ new day:
 # Print the `main.rs` template for testing.
 print:
   @echo '{{ day_template }}' | rustfmt
+
+# Download input for `day`.
+input day:
+  curl \
+    --cookie "session=$AOC_SESSION" \
+    --output ./input/day{{day}}.txt \
+    https://adventofcode.com/2022/day/{{ day }}/input
 
 run day:
   cargo r -p day{{day}}
