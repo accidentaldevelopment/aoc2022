@@ -1,6 +1,8 @@
 set dotenv-load
 
 day_template := '''
+#![deny(clippy::all, clippy::pedantic, rust_2018_idioms)]
+
 // TODO: Set correct day
 const INPUT: &str = include_str!("../../input/day{{day}}.txt");
 
@@ -12,12 +14,15 @@ pub fn main() {
 }
 
 pub fn input_generator(input: &str) -> Vec<usize> {
+  todo!()
 }
 
 fn part1(input: &[usize]) -> usize {
+  todo!()
 }
 
 fn part2(input: &[usize]) -> usize {
+  todo!()
 }
 
 #[cfg(test)]
