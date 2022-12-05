@@ -12,31 +12,34 @@ pub fn main() {
 }
 
 fn part1(input: &str) -> usize {
-    input.lines().fold(0, |acc, line| {
-        let (_, [p0, p1]) = parse::pair(line).unwrap();
-        // This could be done a with a set, but this seemed simpler.
-        if (p1.start() >= p0.start() && p1.end() <= p0.end())
-            || (p0.start() >= p1.start() && p0.end() <= p1.end())
-        {
-            acc + 1
-        } else {
-            acc
-        }
-    })
+    parse::parse(input)
+        .unwrap()
+        .iter()
+        .fold(0, |acc, [r0, r1]| {
+            if (r1.start() >= r0.start() && r1.end() <= r0.end())
+                || (r0.start() >= r1.start() && r0.end() <= r1.end())
+            {
+                acc + 1
+            } else {
+                acc
+            }
+        })
 }
 
 fn part2(input: &str) -> usize {
-    input.lines().fold(0, |acc, line| {
-        let (_, [p0, p1]) = parse::pair(line).unwrap();
-        let s0 = p0.collect::<HashSet<_>>();
-        let s1 = p1.collect::<HashSet<_>>();
+    parse::parse(input)
+        .unwrap()
+        .into_iter()
+        .fold(0, |acc, [r0, r1]| {
+            let s0 = r0.collect::<HashSet<_>>();
+            let s1 = r1.collect::<HashSet<_>>();
 
-        if s0.is_disjoint(&s1) {
-            acc
-        } else {
-            acc + 1
-        }
-    })
+            if s0.is_disjoint(&s1) {
+                acc
+            } else {
+                acc + 1
+            }
+        })
 }
 
 #[cfg(test)]
